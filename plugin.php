@@ -392,11 +392,11 @@ function show_critical_errors() {
 
 	$errors = get_option( 'podlove_global_messages', array() );
 
-	if ( ! isset( $errors['errors'] ) && ! isset( $errors['notices'] ) )
-		return;
+	// if ( ! isset( $errors['errors'] ) && ! isset( $errors['notices'] ) )
+	// 	return;
 
-	if ( count( $errors['errors'] ) + count( $errors['notices'] ) === 0 )
-		return;
+	// if ( count( $errors['errors'] ) + count( $errors['notices'] ) === 0 )
+	// 	return;
 
 	// if there are errors, always run the system report to see if they are gone
     ?>

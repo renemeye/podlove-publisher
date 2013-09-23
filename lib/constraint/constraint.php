@@ -110,9 +110,8 @@ abstract class Constraint {
 	final private function findViolation() {
 
 		$where = sprintf(
-			'constraint_class = "%s" AND scope = "%s" AND resolved_at IS NULL',
-			self::escapedClassString(),
-			static::SCOPE
+			'constraint_class = "%s" AND resolved_at IS NULL',
+			self::escapedClassString()
 		);
 		
 		if (self::hasResource())
@@ -128,7 +127,7 @@ abstract class Constraint {
 	}
 
 	final private function hasResource() {
-		return !in_array(static::SCOPE, array('podcast', 'system'));
+		return is_object($this->resource) && property_exists($this->resource, 'id');
 	}
 
 	final private function handleValidationSuccess() {

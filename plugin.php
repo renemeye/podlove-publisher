@@ -388,60 +388,6 @@ add_action( 'update_option_podlove_active_modules', function( $old_val, $new_val
 	}
 }, 10, 2 );
 
-function show_critical_errors() {
-
-	$errors = get_option( 'podlove_global_messages', array() );
-
-	// if ( ! isset( $errors['errors'] ) && ! isset( $errors['notices'] ) )
-	// 	return;
-
-	// if ( count( $errors['errors'] ) + count( $errors['notices'] ) === 0 )
-	// 	return;
-
-	// if there are errors, always run the system report to see if they are gone
-    ?>
-    <style type="text/css">
-    .wrap div.error {
-    	border: 1px solid #CCC;
-    	border-left: 3px solid #f55;
-    	border-radius: 0;
-    	background: #EEE;
-    }
-    </style>
-
-    <div class="error">
-        
-    	<?php if ( isset( $errors['errors'] ) ): ?>
-			<h3>
-				<?php echo __( 'Critical Podlove Warnings', 'podlove' ) ?>
-			</h3>
-    		<ul>
-    			<?php foreach ( $errors['errors'] as $error ): ?>
-    				<li><?php echo $error ?></li>
-    			<?php endforeach; ?>
-    			<?php foreach ( $errors['notices'] as $error ): ?>
-    				<li><?php echo $error ?></li>
-    			<?php endforeach; ?>
-    		</ul>
-    	<?php endif; ?>
-
-    	<hr/>
-
-    	<ul>
-    		<?php foreach ( Model\Violation::find_all_by_where('resolved_at IS NULL') as $violation ): ?>
-				<?php $constraint = $violation->getConstraint(); ?>
-    			<li>
-    				<strong><?php $constraint->the_title(); ?></strong>
-    				<?php $constraint->the_description(); ?>
-    			</li>
-    		<?php endforeach; ?>
-    	</ul>
-
-    </div>
-    <?php
-}
-add_action( 'admin_notices', '\Podlove\show_critical_errors' );
-
 /**
  * Simple method to allow support for multiple urls per post.
  *
@@ -831,3 +777,8 @@ function podlove_validate_episodes() {
 		$episode->validate();
 	}
 }
+
+// init constraint bar
+add_action('admin_init', function() {
+	ConstraintBar::instance();
+});

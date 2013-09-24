@@ -113,7 +113,7 @@ abstract class Constraint {
 
 		$where = sprintf(
 			'constraint_class = "%s" AND resolved_at IS NULL',
-			self::escapedClassString()
+			self::escapedClassString($this)
 		);
 		
 		if (self::hasResource())

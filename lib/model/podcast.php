@@ -223,6 +223,7 @@ Podcast::constraint( '\Podlove\Constraint\System\UrlFopenAllowed' );
 
 Podcast::constraint( '\Podlove\Constraint\Podcast\PodcastHasTitle' );
 Podcast::constraint( '\Podlove\Constraint\Podcast\PodcastHasUploadLocation' );
+Podcast::constraint( '\Podlove\Constraint\Podcast\PosterImageHasCorrectSize' );
 
 // kick off validation
 function validate_podcast($id = NULL) {

@@ -95,12 +95,14 @@ abstract class Constraint {
 
 	final private function createViolation() {
 		$violation = new Model\Violation;
-		$violation->constraint_class = self::escapedClassString();
+		$violation->constraint_class = self::escapedClassString($this);
 		$violation->severity = static::SEVERITY;
 		$violation->scope = static::SCOPE;
 
-		if (self::hasResource())
-			$violation->scope_resource_id = $this->resource->id;
+		if (self::hasResource()) {
+			$violation->resource_id = $this->resource->id;
+			$violation->resource_class = self::escapedClassString($this->resource);
+		}
 
 		$violation->occured_at = date("Y-m-d H:i:s");
 		$violation->last_checked_at = date("Y-m-d H:i:s");
@@ -115,13 +117,19 @@ abstract class Constraint {
 		);
 		
 		if (self::hasResource())
-			$where .= sprintf(' AND scope_resource_id = "%d"', $this->resource->id);
+			$where .= sprintf(' AND resource_id = "%d"', $this->resource->id);
 
 		return Model\Violation::find_one_by_where($where);
 	}
 
-	final private function escapedClassString() {
-		$class = get_class($this);
+	/**
+	 * Get escaped full qualified class path for given class instance.
+	 * 
+	 * @param  object $instance
+	 * @return string
+	 */
+	final private function escapedClassString($instance) {
+		$class = get_class($instance);
 		$class = str_replace("\\", "_", $class);
 		return $class;
 	}

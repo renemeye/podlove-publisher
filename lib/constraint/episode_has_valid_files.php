@@ -6,7 +6,7 @@ use \Podlove\Model;
 
 class EpisodeHasValidFiles extends Constraint {
 
-	const SCOPE = 'feed';
+	const SCOPE = 'episode';
 	const SEVERITY = Constraint::SEVERITY_CRITICAL;
 
 	public function the_title() {
@@ -15,7 +15,7 @@ class EpisodeHasValidFiles extends Constraint {
 
 	public function the_description() {
 		$episode = $this->resource;
-		$edit_url = admin_url('post.php?post=' . $episode->post_id . 'action=edit');
+		$edit_url = admin_url('post.php?post=' . $episode->post_id . '&action=edit');
 
 		?>
 		<p>

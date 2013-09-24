@@ -20,7 +20,14 @@ class Violation extends Base {
 	 */
 	public function getConstraint() {
 		$className = str_replace("_", "\\", $this->constraint_class);
-		return new $className;
+
+		// FIXME: make this work without scope
+		$resource = NULL;
+		if ($this->scope == 'episode' && $this->scope_resource_id) {
+			$resource = Episode::find_by_id($this->scope_resource_id);
+		}
+
+		return new $className($resource);
 	}
 
 }

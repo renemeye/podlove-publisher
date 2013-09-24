@@ -778,6 +778,12 @@ function podlove_validate_episodes() {
 	}
 }
 
+function podlove_validate_episode($episode_id) {
+	Model\Episode::find_by_id($episode_id)->validate();
+}
+
+add_action('podlove_episode_content_has_changed','\Podlove\podlove_validate_episode');
+
 // init constraint bar
 add_action('admin_init', function() {
 	ConstraintBar::instance();

@@ -127,7 +127,7 @@ abstract class Constraint {
 	}
 
 	final private function hasResource() {
-		return is_object($this->resource) && property_exists($this->resource, 'id');
+		return $this->resource && $this->resource->id;
 	}
 
 	final private function handleValidationSuccess() {

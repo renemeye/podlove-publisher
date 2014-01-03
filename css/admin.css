@@ -92,6 +92,10 @@ table#dashboard_feed_info {
 	width: 100%;
 }
 
+table#dashboard_feed_info td.center {
+	text-align: center;
+}
+
 /* Support */
 .podlove_system_report {
 	font-family: monospace;

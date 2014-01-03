@@ -344,14 +344,18 @@ class Dashboard {
 					<?php
 						foreach ($feeds as $feed_key => $feed) {
 							$number_of_items = count( $feed->post_ids() );
+							$feed_request = self::request_feed( $feed->get_subscribe_url());
+
+							$header = $feed_request['headers'];
+							$body = $feed_request['body'];
 
 							$source  = "<tr>\n";
-							$source .= "<td>" . $feed->name . "</td>";
-							$source .= "<td>" . $feed->slug . "</td>";
-							$source .= "<td></td>";
-							$source .= "<td>" . $number_of_items ."</td>";
-							$source .= "<td></td>";
-							$source .= "<td></td>";
+							$source .= "<td><a href='" . $feed->get_subscribe_url() . "'>" . $feed->name ."</a></td>";
+							$source .= "<td class='center'>" . $feed->slug . "</td>";
+							$source .= "<td class='center'>" . $header['last-modified'] ."</td>";
+							$source .= "<td class='center'>" . $number_of_items ."</td>";
+							$source .= "<td class='center'>" .  strlen( gzdeflate( $body , 9 ) ) . " / " .  strlen( $body ) . "</td>";
+							$source .= "<td class='center'></td>";
 							$source .= "</tr>\n";
 							echo $source;
 						}
@@ -361,15 +365,17 @@ class Dashboard {
 		<?php
 	}
 
-	private static function get_feed_size( $url, $compression ) {
+	private static function request_feed( $url ) {
 		$curl = new \Podlove\Http\Curl();
 		$curl->request( $url, array(
 			'headers' => array( 'Content-type'  => 'application/json' ),
-			'body' => null,
-			'timeout' => 10
-			
+			'timeout' => 10,
+			'compress' => true,
+			'decompress' => false,
+			'sslcertificates' => '', // Set both options to '' to avoid errors
+			'_redirection' => ''
 		) );
-		return $curl->get_response()['headers'];
+		return $curl->get_response();
 	}
 
 	public static function validate_podcast_files() {

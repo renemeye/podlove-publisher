@@ -66,6 +66,7 @@ class Dashboard {
 	public static function settings_page() {
 		add_meta_box( Dashboard::$pagehook . '_about', __( 'About', 'podlove' ), '\Podlove\Settings\Dashboard::about_meta', Dashboard::$pagehook, 'side' );		
 		add_meta_box( Dashboard::$pagehook . '_statistics', __( 'At a glance', 'podlove' ), '\Podlove\Settings\Dashboard::statistics', Dashboard::$pagehook, 'normal' );
+		add_meta_box( Dashboard::$pagehook . '_feeds', __( 'Podcast feeds', 'podlove' ), '\Podlove\Settings\Dashboard::feeds', Dashboard::$pagehook, 'normal' );
 		add_meta_box( Dashboard::$pagehook . '_validation', __( 'Validate Podcast Files', 'podlove' ), '\Podlove\Settings\Dashboard::validate_podcast_files', Dashboard::$pagehook, 'normal' );
 
 		do_action( 'podlove_dashboard_meta_boxes' );
@@ -323,6 +324,52 @@ class Dashboard {
 			<?php echo sprintf( __('You are using %s', 'podlove'), '<strong>Podlove Publisher ' . \Podlove\get_plugin_header( 'Version' ) . '</strong>'); ?>.
 		</p>
 		<?php
+	}
+
+	public static function feeds() {
+		$feeds = \Podlove\Model\Feed::all();
+		?>
+			<table id="dashboard_feed_info">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Slug</th>
+						<th>Last Modification</th>
+						<th>Entries</th>
+						<th>Size of Feed (gzip / uncompressed)</th>
+						<th>Validation</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+						foreach ($feeds as $feed_key => $feed) {
+							$number_of_items = count( $feed->post_ids() );
+
+							$source  = "<tr>\n";
+							$source .= "<td>" . $feed->name . "</td>";
+							$source .= "<td>" . $feed->slug . "</td>";
+							$source .= "<td></td>";
+							$source .= "<td>" . $number_of_items ."</td>";
+							$source .= "<td></td>";
+							$source .= "<td></td>";
+							$source .= "</tr>\n";
+							echo $source;
+						}
+					?>
+				</tbody>
+			</table>
+		<?php
+	}
+
+	private static function get_feed_size( $url, $compression ) {
+		$curl = new \Podlove\Http\Curl();
+		$curl->request( $url, array(
+			'headers' => array( 'Content-type'  => 'application/json' ),
+			'body' => null,
+			'timeout' => 10
+			
+		) );
+		return $curl->get_response()['headers'];
 	}
 
 	public static function validate_podcast_files() {

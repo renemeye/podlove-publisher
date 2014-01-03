@@ -88,6 +88,10 @@ table.podlove-dashboard-statistics td {
 	width: 100px;
 }
 
+table#dashboard_feed_info {
+	width: 100%;
+}
+
 /* Support */
 .podlove_system_report {
 	font-family: monospace;

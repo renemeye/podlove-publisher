@@ -63,7 +63,15 @@ class Ajax {
 	public function validate_feed() {
 		$feed_id = $_REQUEST['feed_id'];
 		$feed = \Podlove\Model\Feed::find_by_id( $feed_id );
-		$this->respond_with_json( array( 'answer' => \Podlove\Settings\Dashboard::validate_feed( $feed->get_subscribe_url() ) ) );
+
+		
+		$feed_validation = \Podlove\Settings\Dashboard::validate_feed( $feed->get_subscribe_url() );
+		// Renew transient
+		set_transient( 'podlove_dashboard_feed_validation_' . $feed_id, 
+											  $feed_validation,
+											  3600*24 );
+
+		$this->respond_with_json( array( 'answer' => $feed_validation ) );
 	}
 
 	public function validate_file() {

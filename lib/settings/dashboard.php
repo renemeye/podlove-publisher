@@ -329,6 +329,9 @@ class Dashboard {
 	public static function feeds() {
 		$feeds = \Podlove\Model\Feed::all();
 		?>
+
+			<input id="revalidate_feeds" type="button" class="button button-primary" value="<?php echo __( 'Revalidate Feeds', 'podlove' ); ?>">
+
 			<table id="dashboard_feed_info">
 				<thead>
 					<tr>
@@ -351,6 +354,14 @@ class Dashboard {
 								set_transient( 'podlove_dashboard_feed_info_' . $feed->id, 
 											  $feed_request,
 											  3600*24 );
+							}
+
+							$feed_validation = get_transient( 'podlove_dashboard_feed_validation_' . $feed->id );
+							if ( false === $feed_validation ) {
+								$feed_validation = self::validate_feed( $feed->get_subscribe_url() );
+								set_transient( 'podlove_dashboard_feed_validation_' . $feed->id, 
+											  $feed_validation,
+											  3600*24 );
 							}							 
 
 							$feed_header = $feed_request['headers'];
@@ -362,7 +373,7 @@ class Dashboard {
 							$source .= "<td class='center'>" . $feed_header['last-modified'] ."</td>";
 							$source .= "<td class='center'>" . $number_of_items ."</td>";
 							$source .= "<td class='center'>" .  strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body ) . "</td>";
-							$source .= "<td class='center'></td>";
+							$source .= "<td class='center' data-feed-id='" . $feed->id . "'>" . $feed_validation . "</td>";
 							$source .= "</tr>\n";
 							echo $source;
 						}
@@ -372,7 +383,7 @@ class Dashboard {
 		<?php
 	}
 
-	private static function request_feed( $url ) {
+	public static function request_feed( $url ) {
 		$curl = new \Podlove\Http\Curl();
 		$curl->request( $url, array(
 			'headers' => array( 'Content-type'  => 'application/json' ),
@@ -385,11 +396,39 @@ class Dashboard {
 		return $curl->get_response();
 	}
 
+	public static function validate_feed( $url ) {
+
+		define( 'FEED_VALIDATION_OK', '<i class="clickable podlove-icon-ok"></i>' );
+		define( 'FEED_VALIDATION_INACTIVE', '<i class="podlove-icon-minus"></i>' );
+		define( 'FEED_VALIDATION_ERROR', '<i class="clickable podlove-icon-remove"></i>' );
+
+		$curl = new \Podlove\Http\Curl();
+		$curl->request( "http://validator.w3.org/feed/check.cgi?output=soap12&url=http://freakshow.fm/feed/m4a/", array(
+			'headers' => array( 'Content-type'  => 'application/soap+xml' ),
+			'timeout' => 15,
+			'compress' => true,
+			'decompress' => false,
+			'sslcertificates' => '', // Set both options to '' to avoid errors
+			'_redirection' => ''
+		) );
+		$response = $curl->get_response();
+
+		if( strpos( $response['body'], 'faultcode' ) )
+			return FEED_VALIDATION_INACTIVE;
+
+		$xml = simplexml_load_string( $response['body'] );
+		$namespaces = $xml->getNamespaces( true );
+		$soap = $xml->children( $namespaces['env'] );
+		$warning_and_error_list = $soap->Body->children( $namespaces['m'] )->children( $namespaces['m'] );
+
+		return ( $warning_and_error_list->validity == 'true' ? FEED_VALIDATION_OK : FEED_VALIDATION_ERROR );
+	}
+
 	public static function validate_podcast_files() {
 		
 		$podcast = Model\Podcast::get_instance();
 		?>
-		<div id="validation">
+		<div id="asset_validation">
 			<?php
 			$episodes = Model\Episode::all( 'ORDER BY slug DESC' );
 			$assets   = Model\EpisodeAsset::all();

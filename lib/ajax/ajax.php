@@ -13,6 +13,7 @@ class Ajax {
 
 		$actions = array(
 			'get-new-guid',
+			'validate-feed',
 			'validate-file',
 			'validate-url',
 			'update-file',
@@ -57,6 +58,12 @@ class Ajax {
 		$guid = \Podlove\Custom_Guid::guid_for_post( $post );
 
 		$this->respond_with_json( array( 'guid' => $guid ) );
+	}
+
+	public function validate_feed() {
+		$feed_id = $_REQUEST['feed_id'];
+		$feed = \Podlove\Model\Feed::find_by_id( $feed_id );
+		$this->respond_with_json( array( 'answer' => \Podlove\Settings\Dashboard::validate_feed( $feed->get_subscribe_url() ) ) );
 	}
 
 	public function validate_file() {

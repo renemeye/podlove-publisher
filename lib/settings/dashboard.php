@@ -344,7 +344,14 @@ class Dashboard {
 					<?php
 						foreach ($feeds as $feed_key => $feed) {
 							$number_of_items = count( $feed->post_ids() );
-							$feed_request = self::request_feed( $feed->get_subscribe_url());
+
+							$feed_request = get_transient( 'podlove_dashboard_feed_size' . $feed->id );
+							if ( false === $feed_request ) {
+								$feed_request = self::request_feed( $feed->get_subscribe_url());
+								set_transient( 'podlove_dashboard_feed_size' . $feed->id, 
+											  $feed_request,
+											  3600*24 );
+							}							 
 
 							$header = $feed_request['headers'];
 							$body = $feed_request['body'];

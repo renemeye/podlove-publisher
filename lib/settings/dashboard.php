@@ -396,11 +396,7 @@ class Dashboard {
 		return $curl->get_response();
 	}
 
-	public static function validate_feed( $url ) {
-
-		define( 'FEED_VALIDATION_OK', '<i class="clickable podlove-icon-ok"></i>' );
-		define( 'FEED_VALIDATION_INACTIVE', '<i class="podlove-icon-minus"></i>' );
-		define( 'FEED_VALIDATION_ERROR', '<i class="clickable podlove-icon-remove"></i>' );
+	public static function get_feed_validation( $url ) {
 
 		$curl = new \Podlove\Http\Curl();
 		$curl->request( "http://validator.w3.org/feed/check.cgi?output=soap12&url=http://freakshow.fm/feed/m4a/", array(
@@ -421,7 +417,39 @@ class Dashboard {
 		$soap = $xml->children( $namespaces['env'] );
 		$warning_and_error_list = $soap->Body->children( $namespaces['m'] )->children( $namespaces['m'] );
 
-		return ( $warning_and_error_list->validity == 'true' ? FEED_VALIDATION_OK : FEED_VALIDATION_ERROR );
+		$warning_list = array();
+		$error_list = array();
+
+		// Getting Warnings
+		foreach ( $warning_and_error_list->warnings->warninglist->children()  as $warning_key => $warning  ) {
+			$warning_list[] = get_object_vars( $warning ); // Converting object to array here to have a consitent data structure
+		}
+
+		foreach ( $warning_and_error_list->errors->errorlist->children()  as $error_key => $error  ) {
+			$error_list[] = get_object_vars( $error ); // Converting object to array here to have a consitent data structure
+		}
+
+		return array(	
+						'validity'				=> $warning_and_error_list->validity->__toString(),
+						'number_of_errors' 		=> $warning_and_error_list->errors->errorcount->__toString(),
+						'number_of_warnings'	=> $warning_and_error_list->warnings->warningcount->__toString(),
+						'errors'				=> $error_list,
+						'warnings'				=> $warning_list
+					);
+
+	}
+
+	public static function validate_feed( $url ) {
+
+		define( 'FEED_VALIDATION_OK', '<i class="clickable podlove-icon-ok"></i>' );
+		define( 'FEED_VALIDATION_INACTIVE', '<i class="podlove-icon-minus"></i>' );
+		define( 'FEED_VALIDATION_ERROR', '<i class="clickable podlove-icon-remove"></i>' );
+
+		$validation = self::get_feed_validation( $url );
+
+		print_r($validation);
+
+		return ( $validation['validity'] == 'true' ? FEED_VALIDATION_OK : FEED_VALIDATION_ERROR );
 	}
 
 	public static function validate_podcast_files() {

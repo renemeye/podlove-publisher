@@ -340,6 +340,7 @@ class Dashboard {
 						<th>Last Modification</th>
 						<th>Entries</th>
 						<th>Size of Feed (gzip / uncompressed)</th>
+						<th>Protected</th>
 						<th>Validation</th>
 					</tr>
 				</thead>
@@ -373,6 +374,7 @@ class Dashboard {
 							$source .= "<td class='center'>" . $feed_header['last-modified'] ."</td>";
 							$source .= "<td class='center'>" . $number_of_items ."</td>";
 							$source .= "<td class='center'>" .  strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body ) . "</td>";
+							$source .= "<td class='center'>" . ( $feed->protected ? '<i class="clickable podlove-icon-ok"></i>' : '<i class="podlove-icon-minus"></i>' ) . "</td>";
 							$source .= "<td class='center' data-feed-id='" . $feed->id . "'>" . $feed_validation . "</td>";
 							$source .= "</tr>\n";
 							echo $source;
@@ -410,7 +412,7 @@ class Dashboard {
 		$response = $curl->get_response();
 
 		if( strpos( $response['body'], 'faultcode' ) )
-			return FEED_VALIDATION_INACTIVE;
+			return FALSE;
 
 		$xml = simplexml_load_string( $response['body'] );
 		$namespaces = $xml->getNamespaces( true );
@@ -429,7 +431,7 @@ class Dashboard {
 			$error_list[] = get_object_vars( $error ); // Converting object to array here to have a consitent data structure
 		}
 
-		return array(	
+		return array(
 						'validity'				=> $warning_and_error_list->validity->__toString(),
 						'number_of_errors' 		=> $warning_and_error_list->errors->errorcount->__toString(),
 						'number_of_warnings'	=> $warning_and_error_list->warnings->warningcount->__toString(),
@@ -439,17 +441,41 @@ class Dashboard {
 
 	}
 
-	public static function validate_feed( $url ) {
+	public static function validate_feed( $feed_id ) {
 
+		$feed = \Podlove\Model\Feed::find_by_id( $feed_id );
+		$feed_subscribe_url = $feed->get_subscribe_url();
+
+		// Define Icons for validation
 		define( 'FEED_VALIDATION_OK', '<i class="clickable podlove-icon-ok"></i>' );
 		define( 'FEED_VALIDATION_INACTIVE', '<i class="podlove-icon-minus"></i>' );
 		define( 'FEED_VALIDATION_ERROR', '<i class="clickable podlove-icon-remove"></i>' );
 
-		$validation = self::get_feed_validation( $url );
+		$validation = self::get_feed_validation( $feed_subscribe_url );
 
-		print_r($validation);
+		\Podlove\Log::get()->addInfo( 'Validate feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.' );
+
+		if( !$validation ) {
+			\Podlove\Log::get()->addInfo( 'Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a> is not accessible for validation.' );
+			return FEED_VALIDATION_INACTIVE;
+		}
+
+		// Log Warnings and errors
+		self::log_feed_validation( $feed, $validation );
 
 		return ( $validation['validity'] == 'true' ? FEED_VALIDATION_OK : FEED_VALIDATION_ERROR );
+	}
+
+	public static function log_feed_validation( $feed, $validation ) {
+		$feed_subscribe_url = $feed->get_subscribe_url();
+
+		foreach ( $validation['warnings'] as $warning_key => $warning ) {
+			\Podlove\Log::get()->addInfo( 'Warning: ' . $warning['text'] . ', line ' . $warning['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.'   );	
+		}
+
+		foreach ( $validation['errors'] as $error_key => $error ) {
+			\Podlove\Log::get()->addError( 'Warning: ' . $error['text'] . ', line ' . $error['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.'   );	
+		}
 	}
 
 	public static function validate_podcast_files() {

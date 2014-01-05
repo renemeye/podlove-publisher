@@ -345,23 +345,23 @@ class Dashboard {
 						foreach ($feeds as $feed_key => $feed) {
 							$number_of_items = count( $feed->post_ids() );
 
-							$feed_request = get_transient( 'podlove_dashboard_feed_size' . $feed->id );
+							$feed_request = get_transient( 'podlove_dashboard_feed_info_' . $feed->id );
 							if ( false === $feed_request ) {
-								$feed_request = self::request_feed( $feed->get_subscribe_url());
-								set_transient( 'podlove_dashboard_feed_size' . $feed->id, 
+								$feed_request = self::request_feed( $feed->get_subscribe_url() );
+								set_transient( 'podlove_dashboard_feed_info_' . $feed->id, 
 											  $feed_request,
 											  3600*24 );
 							}							 
 
-							$header = $feed_request['headers'];
-							$body = $feed_request['body'];
+							$feed_header = $feed_request['headers'];
+							$feed_body = $feed_request['body'];
 
 							$source  = "<tr>\n";
 							$source .= "<td><a href='" . $feed->get_subscribe_url() . "'>" . $feed->name ."</a></td>";
 							$source .= "<td class='center'>" . $feed->slug . "</td>";
-							$source .= "<td class='center'>" . $header['last-modified'] ."</td>";
+							$source .= "<td class='center'>" . $feed_header['last-modified'] ."</td>";
 							$source .= "<td class='center'>" . $number_of_items ."</td>";
-							$source .= "<td class='center'>" .  strlen( gzdeflate( $body , 9 ) ) . " / " .  strlen( $body ) . "</td>";
+							$source .= "<td class='center'>" .  strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body ) . "</td>";
 							$source .= "<td class='center'></td>";
 							$source .= "</tr>\n";
 							echo $source;

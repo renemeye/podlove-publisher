@@ -303,10 +303,10 @@ class Feed extends Base {
 		$errors_and_warnings = $this->getValidationErrorsandWarnings();
 		$feed_subscribe_url = $this->get_subscribe_url();
 
-		\Podlove\Log::get()->addInfo( 'Validate feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.' );
+		\Podlove\Log::get()->addInfo( 'Validate feed <a href="' . $feed_subscribe_url . '">' . $this->name . '</a>.' );
 
 		if( !$errors_and_warnings ) {
-			\Podlove\Log::get()->addInfo( 'Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a> is not accessible for validation.' );
+			\Podlove\Log::get()->addInfo( 'Feed <a href="' . $feed_subscribe_url . '">' . $this->name . '</a> is not accessible for validation.' );
 			return FEED_VALIDATION_INACTIVE;
 		}
 

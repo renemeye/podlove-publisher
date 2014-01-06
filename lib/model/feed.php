@@ -332,7 +332,7 @@ class Feed extends Base {
 		}
 
 		foreach ( $errors_and_warnings['errors'] as $error_key => $error ) {
-			\Podlove\Log::get()->addError( 'Warning: ' . $error['text'] . ', line ' . $error['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $this->name . '</a>.'   );	
+			\Podlove\Log::get()->addError( 'Error: ' . $error['text'] . ', line ' . $error['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $this->name . '</a>.'   );	
 		}
 	}
 

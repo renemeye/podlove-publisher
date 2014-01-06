@@ -14,6 +14,7 @@ class Feed_Validation extends \Podlove\Modules\Base {
 		add_action( 'podlove_module_was_deactivated_feed_validation', array( $this, 'was_deactivated' ) );
 		add_action( 'podlove_feed_validation', array( $this, 'do_validations' ) );
 		add_action( 'publish_podcast', array( $this, 'renewFeedTransients' ) );
+		add_action( 'delete_post', array( $this, 'renewFeedTransients' ) );
 		add_action( 'podlove_module_before_settings_feed_validation', function () {
 			if ( $timezone = get_option( 'timezone_string' ) )
 				date_default_timezone_set( $timezone );
@@ -63,7 +64,10 @@ class Feed_Validation extends \Podlove\Modules\Base {
 	{
 		foreach ( \Podlove\Model\Feed::all() as $feed_key => $feed ) {
 			// Performing validation and log the errors
-			$feed->logValidation( $feed->getValidationErrorsandWarnings() );
+			$errors_and_warnings = $feed->getValidationErrorsandWarnings();
+			
+			if( $errors_and_warnings )
+				$feed->logValidation();
 			// Refresh the transient
 			set_transient( 'podlove_dashboard_feed_validation_' . $feed->id, 
 											  $feed->getValidationIcon(),

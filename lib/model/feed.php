@@ -219,6 +219,116 @@ class Feed extends Base {
 		// default to no limit; however, this should never happen
 		return '';
 	}
+
+	/**
+	 * Fetch feed source
+	 */
+
+	public function getSource() {
+		$curl = new \Podlove\Http\Curl();
+		$curl->request( $this->get_subscribe_url(), array(
+			'headers' => array( 'Content-type'  => 'application/json' ),
+			'timeout' => 10,
+			'compress' => true,
+			'decompress' => false,
+			'sslcertificates' => '', // Set both options to '' to avoid errors
+			'_redirection' => ''
+		) );
+		return $curl->get_response();
+	}
+
+	/**
+	 * Feed Validation via w3c validator API (http://validator.w3.org/feed/)
+	 */
+
+	public function getValidation()
+	{
+		$curl = new \Podlove\Http\Curl();
+		$curl->request( "http://validator.w3.org/feed/check.cgi?output=soap12&url=http://freakshow.fm/feed/m4a/", array(
+			'headers' => array( 'Content-type'  => 'application/soap+xml' ),
+			'timeout' => 15,
+			'compress' => true,
+			'decompress' => false,
+			'sslcertificates' => '', // Set both options to '' to avoid errors
+			'_redirection' => ''
+		) );
+		$response = $curl->get_response();
+
+		if( strpos( $response['body'], 'faultcode' ) )
+			return FALSE; // Returning FALSE if feed is not recheable
+
+		$xml = simplexml_load_string( $response['body'] ); 
+
+		$namespaces = $xml->getNamespaces( true );
+		$soap = $xml->children( $namespaces['env'] ); // Strip SOAP environment
+
+		return $soap->Body->children( $namespaces['m'] )->children( $namespaces['m'] ); // Return errors and warnings
+	}
+
+	private function getValidationErrorsandWarnings()
+	{
+		$warning_and_error_list = $this->getValidation();
+
+		if( !$warning_and_error_list ) 
+			return FALSE;
+
+		$warning_list = array();
+		$error_list = array();
+
+		// Getting Warnings
+		foreach ( $warning_and_error_list->warnings->warninglist->children()  as $warning_key => $warning  ) {
+			$warning_list[] = get_object_vars( $warning ); // Converting object to array here to have a consistent data structure
+		}
+
+		foreach ( $warning_and_error_list->errors->errorlist->children()  as $error_key => $error  ) {
+			$error_list[] = get_object_vars( $error ); // Converting object to array here to have a consistent data structure
+		}
+
+		return array(
+						'validity'				=> $warning_and_error_list->validity->__toString(),
+						'number_of_errors' 		=> $warning_and_error_list->errors->errorcount->__toString(),
+						'number_of_warnings'	=> $warning_and_error_list->warnings->warningcount->__toString(),
+						'errors'				=> $error_list,
+						'warnings'				=> $warning_list
+					);
+	}
+
+	public function getValidationIcon()
+	{
+		// Define Icons for validation
+		define( 'FEED_VALIDATION_OK', '<i class="clickable podlove-icon-ok"></i>' );
+		define( 'FEED_VALIDATION_INACTIVE', '<i class="podlove-icon-minus"></i>' );
+		define( 'FEED_VALIDATION_ERROR', '<i class="clickable podlove-icon-remove"></i>' );
+
+		$errors_and_warnings = $this->getValidationErrorsandWarnings();
+		$feed_subscribe_url = $this->get_subscribe_url();
+
+		\Podlove\Log::get()->addInfo( 'Validate feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.' );
+
+		if( !$errors_and_warnings ) {
+			\Podlove\Log::get()->addInfo( 'Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a> is not accessible for validation.' );
+			return FEED_VALIDATION_INACTIVE;
+		}
+
+		// Log Warnings and errors
+		$this->logValidation( $errors_and_warnings );
+
+		return ( $errors_and_warnings['validity'] == 'true' ? FEED_VALIDATION_OK : FEED_VALIDATION_ERROR );
+	}
+
+	public function logValidation( $errors_and_warnings )
+	{
+		$feed_subscribe_url = $this->get_subscribe_url();
+
+		foreach ( $errors_and_warnings['warnings'] as $warning_key => $warning ) {
+			\Podlove\Log::get()->addInfo( 'Warning: ' . $warning['text'] . ', line ' . $warning['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $this->name . '</a>.'   );	
+		}
+
+		foreach ( $errors_and_warnings['errors'] as $error_key => $error ) {
+			\Podlove\Log::get()->addError( 'Warning: ' . $error['text'] . ', line ' . $error['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $this->name . '</a>.'   );	
+		}
+	}
+
 }
 
 Feed::property( 'id', 'INT NOT NULL AUTO_INCREMENT PRIMARY KEY' );

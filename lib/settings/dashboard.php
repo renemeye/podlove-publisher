@@ -351,7 +351,7 @@ class Dashboard {
 
 							$feed_request = get_transient( 'podlove_dashboard_feed_info_' . $feed->id );
 							if ( false === $feed_request ) {
-								$feed_request = self::request_feed( $feed->get_subscribe_url() );
+								$feed_request = $this->request_feed();
 								set_transient( 'podlove_dashboard_feed_info_' . $feed->id, 
 											  $feed_request,
 											  3600*24 );
@@ -359,7 +359,7 @@ class Dashboard {
 
 							$feed_validation = get_transient( 'podlove_dashboard_feed_validation_' . $feed->id );
 							if ( false === $feed_validation ) {
-								$feed_validation = self::validate_feed( $feed->get_subscribe_url() );
+								$feed_validation = $feed->getValidationIcon();
 								set_transient( 'podlove_dashboard_feed_validation_' . $feed->id, 
 											  $feed_validation,
 											  3600*24 );
@@ -383,99 +383,6 @@ class Dashboard {
 				</tbody>
 			</table>
 		<?php
-	}
-
-	public static function request_feed( $url ) {
-		$curl = new \Podlove\Http\Curl();
-		$curl->request( $url, array(
-			'headers' => array( 'Content-type'  => 'application/json' ),
-			'timeout' => 10,
-			'compress' => true,
-			'decompress' => false,
-			'sslcertificates' => '', // Set both options to '' to avoid errors
-			'_redirection' => ''
-		) );
-		return $curl->get_response();
-	}
-
-	public static function get_feed_validation( $url ) {
-
-		$curl = new \Podlove\Http\Curl();
-		$curl->request( "http://validator.w3.org/feed/check.cgi?output=soap12&url=http://freakshow.fm/feed/m4a/", array(
-			'headers' => array( 'Content-type'  => 'application/soap+xml' ),
-			'timeout' => 15,
-			'compress' => true,
-			'decompress' => false,
-			'sslcertificates' => '', // Set both options to '' to avoid errors
-			'_redirection' => ''
-		) );
-		$response = $curl->get_response();
-
-		if( strpos( $response['body'], 'faultcode' ) )
-			return FALSE;
-
-		$xml = simplexml_load_string( $response['body'] );
-		$namespaces = $xml->getNamespaces( true );
-		$soap = $xml->children( $namespaces['env'] );
-		$warning_and_error_list = $soap->Body->children( $namespaces['m'] )->children( $namespaces['m'] );
-
-		$warning_list = array();
-		$error_list = array();
-
-		// Getting Warnings
-		foreach ( $warning_and_error_list->warnings->warninglist->children()  as $warning_key => $warning  ) {
-			$warning_list[] = get_object_vars( $warning ); // Converting object to array here to have a consitent data structure
-		}
-
-		foreach ( $warning_and_error_list->errors->errorlist->children()  as $error_key => $error  ) {
-			$error_list[] = get_object_vars( $error ); // Converting object to array here to have a consitent data structure
-		}
-
-		return array(
-						'validity'				=> $warning_and_error_list->validity->__toString(),
-						'number_of_errors' 		=> $warning_and_error_list->errors->errorcount->__toString(),
-						'number_of_warnings'	=> $warning_and_error_list->warnings->warningcount->__toString(),
-						'errors'				=> $error_list,
-						'warnings'				=> $warning_list
-					);
-
-	}
-
-	public static function validate_feed( $feed_id ) {
-
-		$feed = \Podlove\Model\Feed::find_by_id( $feed_id );
-		$feed_subscribe_url = $feed->get_subscribe_url();
-
-		// Define Icons for validation
-		define( 'FEED_VALIDATION_OK', '<i class="clickable podlove-icon-ok"></i>' );
-		define( 'FEED_VALIDATION_INACTIVE', '<i class="podlove-icon-minus"></i>' );
-		define( 'FEED_VALIDATION_ERROR', '<i class="clickable podlove-icon-remove"></i>' );
-
-		$validation = self::get_feed_validation( $feed_subscribe_url );
-
-		\Podlove\Log::get()->addInfo( 'Validate feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.' );
-
-		if( !$validation ) {
-			\Podlove\Log::get()->addInfo( 'Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a> is not accessible for validation.' );
-			return FEED_VALIDATION_INACTIVE;
-		}
-
-		// Log Warnings and errors
-		self::log_feed_validation( $feed, $validation );
-
-		return ( $validation['validity'] == 'true' ? FEED_VALIDATION_OK : FEED_VALIDATION_ERROR );
-	}
-
-	public static function log_feed_validation( $feed, $validation ) {
-		$feed_subscribe_url = $feed->get_subscribe_url();
-
-		foreach ( $validation['warnings'] as $warning_key => $warning ) {
-			\Podlove\Log::get()->addInfo( 'Warning: ' . $warning['text'] . ', line ' . $warning['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.'   );	
-		}
-
-		foreach ( $validation['errors'] as $error_key => $error ) {
-			\Podlove\Log::get()->addError( 'Warning: ' . $error['text'] . ', line ' . $error['line'] . ' in Feed <a href="' . $feed_subscribe_url . '">' . $feed->name . '</a>.'   );	
-		}
 	}
 
 	public static function validate_podcast_files() {

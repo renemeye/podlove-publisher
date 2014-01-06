@@ -29,7 +29,7 @@ var PODLOVE = PODLOVE || {};
 					data: data,
 					dataType: 'json',
 					success: function(result) {
-						$that.html(result.answer);
+						$that.html(result.validation_icon);
 					}
 				});
 

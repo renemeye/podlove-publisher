@@ -347,9 +347,6 @@ class Dashboard {
 				<tbody>
 					<?php
 						foreach ($feeds as $feed_key => $feed) {
-							$number_of_items = count( $feed->post_ids() );
-							$last_modification = date( get_option('date_format') . ' ' . get_option( 'time_format' ), strtotime( $feed_header['last-modified'] ) );
-							$size = strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body );
 
 							$feed_request = get_transient( 'podlove_dashboard_feed_source_' . $feed->id );
 							if ( false === $feed_request ) {
@@ -369,6 +366,10 @@ class Dashboard {
 
 							$feed_header = $feed_request['headers'];
 							$feed_body = $feed_request['body'];
+
+							$number_of_items = count( $feed->post_ids() );
+							$last_modification = date( get_option('date_format') . ' ' . get_option( 'time_format' ), strtotime( $feed_header['last-modified'] ) );
+							$size = strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body );
 
 							$source  = "<tr>\n";
 							$source .= "<td><a href='" . $feed->get_subscribe_url() . "'>" . $feed->name ."</a></td>";

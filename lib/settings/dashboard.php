@@ -330,29 +330,31 @@ class Dashboard {
 		$feeds = \Podlove\Model\Feed::all();
 		?>
 
-			<input id="revalidate_feeds" type="button" class="button button-primary" value="<?php echo __( 'Revalidate Feeds', 'podlove' ); ?>">
+			<input id="revalidate_feeds" type="button" class="button button-primary" value="<?php _e( 'Revalidate Feeds', 'podlove' ); ?>">
 
 			<table id="dashboard_feed_info">
 				<thead>
 					<tr>
-						<th>Name</th>
-						<th>Slug</th>
-						<th>Last Modification</th>
-						<th>Entries</th>
-						<th>Size of Feed (gzip / uncompressed)</th>
-						<th>Protected</th>
-						<th>Validation</th>
+						<th><?php _e( 'Name', 'podlove' ); ?></th>
+						<th><?php _e( 'Slug', 'podlove' ); ?></th>
+						<th><?php _e( 'Last Modification', 'podlove' ); ?></th>
+						<th><?php _e( 'Entries', 'podlove' ); ?></th>
+						<th><?php _e( 'Size of Feed', 'podlove'); ?> (gzip / <?php _e('uncompressed', 'podlove' ); ?>)</th>
+						<th><?php _e( 'Protected', 'podlove'); ?></th>
+						<th><?php _e( 'Validation', 'podlove' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php
 						foreach ($feeds as $feed_key => $feed) {
 							$number_of_items = count( $feed->post_ids() );
+							$last_modification = date( get_option('date_format') . ' ' . get_option( 'time_format' ), strtotime( $feed_header['last-modified'] ) );
+							$size = strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body );
 
-							$feed_request = get_transient( 'podlove_dashboard_feed_info_' . $feed->id );
+							$feed_request = get_transient( 'podlove_dashboard_feed_source_' . $feed->id );
 							if ( false === $feed_request ) {
-								$feed_request = $this->request_feed();
-								set_transient( 'podlove_dashboard_feed_info_' . $feed->id, 
+								$feed_request = $feed->getSource();
+								set_transient( 'podlove_dashboard_feed_source_' . $feed->id, 
 											  $feed_request,
 											  3600*24 );
 							}
@@ -371,9 +373,9 @@ class Dashboard {
 							$source  = "<tr>\n";
 							$source .= "<td><a href='" . $feed->get_subscribe_url() . "'>" . $feed->name ."</a></td>";
 							$source .= "<td class='center'>" . $feed->slug . "</td>";
-							$source .= "<td class='center'>" . $feed_header['last-modified'] ."</td>";
+							$source .= "<td class='center'>" . $last_modification ."</td>";
 							$source .= "<td class='center'>" . $number_of_items ."</td>";
-							$source .= "<td class='center'>" .  strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body ) . "</td>";
+							$source .= "<td class='center'>" . $size . "</td>";
 							$source .= "<td class='center'>" . ( $feed->protected ? '<i class="clickable podlove-icon-ok"></i>' : '<i class="podlove-icon-minus"></i>' ) . "</td>";
 							$source .= "<td class='center' data-feed-id='" . $feed->id . "'>" . $feed_validation . "</td>";
 							$source .= "</tr>\n";

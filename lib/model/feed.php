@@ -231,9 +231,13 @@ class Feed extends Base {
 			'timeout' => 10,
 			'compress' => true,
 			'decompress' => false,
-			'sslcertificates' => '', // Set both options to '' to avoid errors
+			'sslcertificates' => '',
 			'_redirection' => ''
 		) );
+
+		if( is_object( $response ) )
+			return FALSE; // Return FALSE if Error occured
+
 		return $curl->get_response();
 	}
 
@@ -244,15 +248,18 @@ class Feed extends Base {
 	public function getValidation()
 	{
 		$curl = new \Podlove\Http\Curl();
-		$curl->request( "http://validator.w3.org/feed/check.cgi?output=soap12&url=http://freakshow.fm/feed/m4a/", array(
+		$curl->request( "http://validator.w3.org/feed/check.cgi?output=soap12&url=" . $this->get_subscribe_url(), array(
 			'headers' => array( 'Content-type'  => 'application/soap+xml' ),
-			'timeout' => 15,
+			'timeout' => 20,
 			'compress' => true,
 			'decompress' => false,
-			'sslcertificates' => '', // Set both options to '' to avoid errors
+			'sslcertificates' => '',
 			'_redirection' => ''
 		) );
 		$response = $curl->get_response();
+
+		if( is_object( $response ) )
+			return FALSE; // Return FALSE if Error occured
 
 		if( strpos( $response['body'], 'faultcode' ) )
 			return FALSE; // Returning FALSE if feed is not recheable
@@ -265,7 +272,7 @@ class Feed extends Base {
 		return $soap->Body->children( $namespaces['m'] )->children( $namespaces['m'] ); // Return errors and warnings
 	}
 
-	private function getValidationErrorsandWarnings()
+	public function getValidationErrorsandWarnings()
 	{
 		$warning_and_error_list = $this->getValidation();
 

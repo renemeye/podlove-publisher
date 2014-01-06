@@ -6,13 +6,14 @@ use Podlove\Model;
 class Feed_Validation extends \Podlove\Modules\Base {
 
 	protected $module_name = 'Feed Validation';
-	protected $module_description = 'Automatically validate feeds once in a while.';
+	protected $module_description = 'Automatically validate feeds once in a while or if new posts are published.';
 	protected $module_group = 'system';
 
 	public function load() {
 		add_action( 'podlove_module_was_activated_feed_validation', array( $this, 'was_activated' ) );
 		add_action( 'podlove_module_was_deactivated_feed_validation', array( $this, 'was_deactivated' ) );
 		add_action( 'podlove_feed_validation', array( $this, 'do_validations' ) );
+		add_action( 'publish_podcast', array( $this, 'renewFeedTransients' ) );
 		add_action( 'podlove_module_before_settings_feed_validation', function () {
 			if ( $timezone = get_option( 'timezone_string' ) )
 				date_default_timezone_set( $timezone );
@@ -49,16 +50,28 @@ class Feed_Validation extends \Podlove\Modules\Base {
 
 		Log::get()->addInfo( 'Begin scheduled feed validation.' );
 
-		foreach ( \Podlove\Model\Feed::all() as $feed_key => $feed) {
+		$this->renewTransients();
+
+		Log::get()->addInfo( 'End scheduled feed validation.' );
+	}
+
+	/**
+	 * Renew Transients
+	 */
+
+	public function renewFeedTransients()
+	{
+		foreach ( \Podlove\Model\Feed::all() as $feed_key => $feed ) {
 			// Performing validation and log the errors
 			$feed->logValidation( $feed->getValidationErrorsandWarnings() );
 			// Refresh the transient
 			set_transient( 'podlove_dashboard_feed_validation_' . $feed->id, 
 											  $feed->getValidationIcon(),
 											  3600*24 );
+			set_transient( 'podlove_dashboard_feed_source_' . $feed->id, 
+											  $feed->getSource(),
+											  3600*24 );
 		}
-
-		Log::get()->addInfo( 'End scheduled feed validation.' );
 	}
 	
 }

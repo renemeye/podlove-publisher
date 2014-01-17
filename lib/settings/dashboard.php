@@ -339,7 +339,7 @@ class Dashboard {
 						<th><?php _e( 'Slug', 'podlove' ); ?></th>
 						<th><?php _e( 'Last Modification', 'podlove' ); ?></th>
 						<th><?php _e( 'Entries', 'podlove' ); ?></th>
-						<th><?php _e( 'Size of Feed', 'podlove'); ?> (gzip / <?php _e('uncompressed', 'podlove' ); ?>)</th>
+						<th><?php _e( 'Size (compressed)', 'podlove'); ?></th>
 						<th><?php _e( 'Protected', 'podlove'); ?></th>
 						<th><?php _e( 'Validation', 'podlove' ); ?></th>
 					</tr>
@@ -369,7 +369,7 @@ class Dashboard {
 
 							$number_of_items = count( $feed->post_ids() );
 							$last_modification = date( get_option('date_format') . ' ' . get_option( 'time_format' ), strtotime( $feed_header['last-modified'] ) );
-							$size = strlen( gzdeflate( $feed_body , 9 ) ) . " / " .  strlen( $feed_body );
+							$size = \Podlove\format_bytes(strlen( $feed_body )) . " (" .  \Podlove\format_bytes(strlen( gzdeflate( $feed_body , 9 ) )) . ")";
 
 							$source  = "<tr>\n";
 							$source .= "<td><a href='" . $feed->get_subscribe_url() . "'>" . $feed->name ."</a></td>";

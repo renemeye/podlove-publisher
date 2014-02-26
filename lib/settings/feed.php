@@ -258,6 +258,8 @@ class Feed {
 				'html'        => array( 'class' => 'regular-text' )
 			) );
 
+			do_action( 'podlove_feeds_directories', $wrapper );
+
 			$wrapper->subheader( __( 'Advanced Settings', 'podlove' ) );
 
 			$wrapper->select( 'redirect_http_status', array(

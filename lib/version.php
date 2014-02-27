@@ -568,6 +568,14 @@ function run_migrations_for_version( $version ) {
 				}
 			}
 		break;
+		case 57:
+			if (\Podlove\Modules\Base::is_active('bitlove')) {
+				$wpdb->query( sprintf(
+					"ALTER TABLE `%s` ADD COLUMN `bitlove` TINYINT(1) DEFAULT '0'",
+					\Podlove\Model\Feed::table_name()
+				) );
+			}
+		break;
 	}
 
 }

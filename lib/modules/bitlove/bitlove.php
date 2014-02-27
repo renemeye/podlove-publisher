@@ -16,6 +16,7 @@ class Bitlove extends \Podlove\Modules\Base {
 		add_action( 'podlove_feeds_directories', array( $this, 'enable_bitlove_flag_for_feed' ) );
 
 		add_action( 'podlove_module_was_activated_bitlove', array( $this, 'was_activated' ) );
+		add_action( 'podlove_module_was_deactivated_bitlove', array( $this, 'was_deactivated' ) );
 
 		add_action( 'admin_init', array( $this, 'add_feed_model_extension' ) );
 	}
@@ -42,7 +43,7 @@ class Bitlove extends \Podlove\Modules\Base {
 			$decoded_answer = get_object_vars(json_decode($response['body']));
 			$bitlove_url = $decoded_answer[$subscribe_url][0]; // The response is always the first array element
 
-			set_transient( $cache_key, $bitlove_url, 60*60 );
+			set_transient( $cache_key, $bitlove_url, 60*60*24 );
 			return $bitlove_url; 
 		}
 	}
@@ -58,6 +59,15 @@ class Bitlove extends \Podlove\Modules\Base {
 			"ALTER TABLE `%s` ADD COLUMN `bitlove` TINYINT(1) DEFAULT '0'",
 			\Podlove\Model\Feed::table_name()
 		) );
+	}
+
+	public function was_deactivated() {
+		$feeds = \Podlove\Model\Feed::all("WHERE `bitlove` = '1'");
+
+		foreach ($feeds as $feed) {
+			delete_transient( "podlove_bitlove_feed_url_" . $feed->id );
+		}
+		
 	}
 
 	public function enable_bitlove_flag_for_feed( $wrapper ) {

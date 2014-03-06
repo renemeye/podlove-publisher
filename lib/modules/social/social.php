@@ -94,6 +94,12 @@ class Social extends \Podlove\Modules\Base {
 					'url_scheme'	=> 'https://http://instagram.com/%account-placeholder%'
 				),
 			array(
+					'title' 		=> 'Jabber',
+					'description'	=> 'Jabber ID',
+					'logo'			=> 'jabber-128.png',
+					'url_scheme'	=> '%account-placeholder%'
+				),
+			array(
 					'title' 		=> 'Linkedin',
 					'description'	=> 'Linkedin URL',
 					'logo'			=> 'linkedin-128.png',
@@ -110,6 +116,12 @@ class Social extends \Podlove\Modules\Base {
 					'description'	=> 'Pinterest Account',
 					'logo'			=> 'pinterest-128.png',
 					'url_scheme'	=> 'https://www.pinterest.com/%account-placeholder%'
+				),
+			array(
+					'title' 		=> 'Skype',
+					'description'	=> 'Skype Account',
+					'logo'			=> 'skype-128.png',
+					'url_scheme'	=> 'skype:%account-placeholder%'
 				),
 			array(
 					'title' 		=> 'Soundcloud',
